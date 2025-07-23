@@ -31,9 +31,8 @@ pipeline {
                     def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${imageTag}"
 
                     // Use credentials to log in, build, and push the image
-                    // THIS BLOCK IS NOW CORRECTED
-                    withCredentials() {
-                        sh "docker build -t ${fullImageName}."
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "docker build -t ${fullImageName} ."
                         // For Docker Hub, the login command does not need the registry URL
                         sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
                         sh "docker push ${fullImageName}"
@@ -49,25 +48,29 @@ pipeline {
                     def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${imageTag}"
 
                     // Clone the separate GitOps configuration repository
-                    git branch: 'main',
-                        credentialsId: GITOPS_REPO_CREDS_ID,
-                        url: GITOPS_REPO_URL,
-                        dir: 'cluster-config'
+                    withCredentials([usernamePassword(credentialsId: GITOPS_REPO_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh """
+                            git clone https://${GIT_USER}:${GIT_PASS}@github.com/ReyRedd/cluster-config.git cluster-config
+                        """
+                    }
                     
                     // Work inside the cloned repository
                     dir('cluster-config') {
                         // This command updates your specific deployment.yaml file.
                         // It requires 'yq' to be installed on the Jenkins agent.
-                        sh "yq e '.spec.template.spec.containers.image = \"${fullImageName}\"' -i apps/guestbook/deployment.yaml"
+                        sh "yq e '.spec.template.spec.containers[0].image = \"${fullImageName}\"' -i apps/guestbook/deployment.yaml"
 
                         // Configure Git with your user info
-                        sh 'git config --global user.email "mwakioreynold1@gmail.com"'
-                        sh 'git config --global user.name "ReyRedd"'
+                        sh 'git config user.email "mwakioreynold1@gmail.com"'
+                        sh 'git config user.name "ReyRedd"'
 
                         // Add, commit, and push the updated manifest
                         sh 'git add apps/guestbook/deployment.yaml'
                         sh "git commit -m 'ci: Update image for guestbook-app to ${imageTag}'"
-                        sh 'git push origin main'
+                        
+                        withCredentials([usernamePassword(credentialsId: GITOPS_REPO_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                            sh "git push https://${GIT_USER}:${GIT_PASS}@github.com/ReyRedd/cluster-config.git main"
+                        }
                     }
                 }
             }
