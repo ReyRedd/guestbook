@@ -1,0 +1,19 @@
+# This file is managed by the Jenkins pipeline.
+# Manual changes will be overwritten.
+
+image:
+  # The image tag is updated by the Jenkins pipeline
+  tag: "latest"
+
+# Disable the postgresql subchart to use an external database
+postgresql:
+  enabled: false
+
+database:
+  host: "10.3.0.114"
+  port: 5432
+  user: "guestbook"
+  name: "guestbook"
+
+# Reference a secret that you must create in the 'guestbook' namespace.
+existingSecret: "guestbook-db-secret"
