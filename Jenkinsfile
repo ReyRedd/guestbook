@@ -107,8 +107,9 @@ pipeline {
                         sh 'git add apps/guestbook/deployment.yaml'
                         sh "git commit -m 'ci: Update image for guestbook-app to ${imageTag}'"
                         
+                        // FIXED: Removed duplicate username in the push URL
                         withCredentials([usernamePassword(credentialsId: GITOPS_REPO_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                            sh "git push https://${GIT_USER}:${GIT_USER}:${GIT_PASS}@github.com/ReyRedd/cluster-config.git main"
+                            sh "git push https://${GIT_USER}:${GIT_PASS}@github.com/ReyRedd/cluster-config.git main"
                         }
                     }
                 }
