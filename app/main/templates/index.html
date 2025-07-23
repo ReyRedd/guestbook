@@ -1,15 +1,80 @@
-{% extends "base.html" %} {% block content %}
-<div class="container" style="padding-bottom: 200px">
-    <div class="jumbotron shadow-sm">
-        <h1 class="display-4">Hello &#128075;</h1>
-        <p class="lead">
-            Guestbook is a simple cloud-native web application which allows visitors to leave a public comment without creating a user account.
-        </p>
-        <p class="lead">
-            It is deployed on SpectroCloud to show the Power Of MAAS and K8s.
-        </p>
-        <hr class="my-4" />
-        <a class="btn btn-primary btn-lg" href="/entries/new" role="button">Get started</a>
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Custom styles for the enhanced landing page */
+    body {
+        background-color: #121212;
+        color: #ffffff;
+    }
+
+   .hero-section {
+        animation: fadeIn 1.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+   .spectro-text {
+        background: linear-gradient(45deg, #007bff, #6610f2, #e83e8c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 600;
+    }
+
+   .cta-button {
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+        animation: pulse 2s infinite;
+    }
+
+   .cta-button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0 25px rgba(0, 123, 255, 0.8);
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+        }
+        50% {
+            box-shadow: 0 0 25px rgba(0, 123, 255, 0.8);
+        }
+        100% {
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+        }
+    }
+
+   .jumbotron {
+        background-color: rgba(33, 37, 41, 0.8);
+        border-radius: 15px;
+        padding: 4rem 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+
+<div class="container vh-100 d-flex align-items-center justify-content-center text-center">
+    <div class="hero-section">
+        <div class="jumbotron shadow-lg">
+            <h1 class="display-3 fw-bold mb-3">Welcome to the Guestbook &#128075;</h1>
+            <p class="lead text-white-50 mb-4">
+                A simple, cloud-native web application for leaving public comments.
+            </p>
+            <p class="lead mb-5">
+                Deployed on <span class="spectro-text">SpectroCloud</span> to showcase the power of MAAS and K8s!
+            </p>
+            <a class="btn btn-primary btn-lg px-4 py-3 shadow-lg cta-button" href="/entries/new" role="button">
+                Leave a Comment
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
