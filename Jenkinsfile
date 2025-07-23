@@ -1,6 +1,10 @@
 pipeline {
-    agent any
-
+    agent {
+        docker{
+            image 'docker:latest'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
     environment {
         // For Docker Hub, the "registry" is your username
         DOCKER_REGISTRY = 'reyredd'
