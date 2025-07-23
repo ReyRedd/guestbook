@@ -1,10 +1,7 @@
 pipeline {
-    agent {
-        docker{
-            image 'docker:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    // Use any agent for now until Docker is installed
+    agent any
+    
     environment {
         // For Docker Hub, the "registry" is your username
         DOCKER_REGISTRY = 'reyredd'
@@ -19,6 +16,30 @@ pipeline {
     }
 
     stages {
+        stage('System Check') {
+            steps {
+                sh '''
+                    echo "=== System Information ==="
+                    whoami
+                    pwd
+                    
+                    echo "=== Available Commands ==="
+                    which docker || echo "❌ Docker not found - needs to be installed"
+                    which git || echo "❌ Git not found"
+                    which yq || echo "❌ yq not found - will use sed"
+                    which sed || echo "✅ sed found"
+                    
+                    echo "=== Docker Check ==="
+                    if command -v docker > /dev/null 2>&1; then
+                        docker --version
+                        docker ps || echo "Docker daemon not running or permission denied"
+                    else
+                        echo "Docker is not installed on this system"
+                    fi
+                '''
+            }
+        }
+        
         stage('Checkout SCM') {
             steps {
                 // This cleans the workspace before checking out the application code
@@ -30,6 +51,13 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
+                    // Check if Docker is available
+                    def dockerAvailable = sh(script: 'which docker', returnStatus: true) == 0
+                    
+                    if (!dockerAvailable) {
+                        error "Docker is not installed on this Jenkins agent. Please install Docker first."
+                    }
+                    
                     // Use the short git commit hash for the image tag
                     def imageTag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                     def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${imageTag}"
@@ -60,9 +88,16 @@ pipeline {
                     
                     // Work inside the cloned repository
                     dir('cluster-config') {
-                        // This command updates your specific deployment.yaml file.
-                        // It requires 'yq' to be installed on the Jenkins agent.
-                        sh "yq e '.spec.template.spec.containers[0].image = \"${fullImageName}\"' -i apps/guestbook/deployment.yaml"
+                        // Check if yq is available, otherwise use sed
+                        def yqAvailable = sh(script: 'which yq', returnStatus: true) == 0
+                        
+                        if (yqAvailable) {
+                            echo "Using yq to update deployment.yaml"
+                            sh "yq e '.spec.template.spec.containers[0].image = \"${fullImageName}\"' -i apps/guestbook/deployment.yaml"
+                        } else {
+                            echo "Using sed to update deployment.yaml (yq not available)"
+                            sh "sed -i 's|image: .*|image: ${fullImageName}|g' apps/guestbook/deployment.yaml"
+                        }
 
                         // Configure Git with your user info
                         sh 'git config user.email "mwakioreynold1@gmail.com"'
@@ -73,17 +108,24 @@ pipeline {
                         sh "git commit -m 'ci: Update image for guestbook-app to ${imageTag}'"
                         
                         withCredentials([usernamePassword(credentialsId: GITOPS_REPO_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                            sh "git push https://${GIT_USER}:${GIT_PASS}@github.com/ReyRedd/cluster-config.git main"
+                            sh "git push https://${GIT_USER}:${GIT_USER}:${GIT_PASS}@github.com/ReyRedd/cluster-config.git main"
                         }
                     }
                 }
             }
         }
     }
+    
     post {
         always {
-            // Clean up the cloned cluster-config directory
-            deleteDir()
+            script {
+                // Only clean up if we're in a node context
+                try {
+                    deleteDir()
+                } catch (Exception e) {
+                    echo "Could not clean workspace: ${e.getMessage()}"
+                }
+            }
         }
     }
 }
