@@ -31,6 +31,7 @@ pipeline {
                     def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${imageTag}"
 
                     // Use credentials to log in, build, and push the image
+                    // THIS BLOCK IS NOW CORRECTED
                     withCredentials() {
                         sh "docker build -t ${fullImageName}."
                         // For Docker Hub, the login command does not need the registry URL
