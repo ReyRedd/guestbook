@@ -1,16 +1,13 @@
 pipeline {
-    // Use any agent for now until Docker is installed
+    
     agent any
     
     environment {
-        // For Docker Hub, the "registry" is your username
         DOCKER_REGISTRY = 'reyredd'
         DOCKER_IMAGE_NAME = 'guestbook'
-        
-        // Your Jenkins credentials ID for Docker Hub
         DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
         
-        // Your GitOps repository URL and credentials ID
+        
         GITOPS_REPO_URL = "https://github.com/ReyRedd/cluster-config.git"
         GITOPS_REPO_CREDS_ID = 'gitops-repo-creds'
     }
